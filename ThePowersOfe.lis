@@ -1,0 +1,516 @@
+     1                                  ;Author information
+     2                                  ;  Author name: Art Grichine
+     3                                  ;  Author email: ArtGrichine@gmail.com
+     4                                  ;Course information
+     5                                  ;  Course number: CPSC240
+     6                                  ;  Assignment number: 3
+     7                                  ;  Due date: 2014-Feb-25
+     8                                  ;Project information
+     9                                  ;  Project title: The Powers Of e (Assignment 3)
+    10                                  ;  Purpose: Preform Taylor Series (e^x) calculations on 4 user inputs to a user defined amount of iterations, output initial user
+    11                                  ;	    'x' values, result of Taylor Series for each given e^x solution, and elapsed time of the calculations from the system 
+    12                                  ;	    clock in tics, nanoseconds, and seconds.
+    13                                  ;  Status: No known errors
+    14                                  ;  Project files: ThePowersOfe.cpp, ThePowersOfe.asm, debug.inc, debug.asm
+    15                                  ;Module information
+    16                                  ;  This module's call name: ThePowersOfe
+    17                                  ;  Language: X86-64
+    18                                  ;  Syntax: Intel
+    19                                  ;  Date last modified: 2014-Feb-20
+    20                                  ;  Purpose: Intake four values from user, intake a Taylor Series iteration, preform e^x calculation to the user defined amount of 
+    21                                  ;	    iterations. Output initial user 'x' values, result from e^x and the elapsed time of calculations in tics, ns & seconds
+    22                                  ;  File name: ThePowersOfe.asm
+    23                                  ;  Status: In production.  No known errors.
+    24                                  ;  Future enhancements: None planned
+    25                                  ;Translator information
+    26                                  ;  Assemble: nasm -f elf64 -l ThePowersOfe.lis -o ThePowersOfe.o ThePowersOfe.asm
+    27                                  ;References and credits
+    28                                  ;  CSUF/Professor Floyd Holliday: http://holliday.ecs.fullerton.edu
+    29                                  ;Print information
+    30                                  ;  Page width: 132 columns
+    31                                  ;  Begin comments: 65
+    32                                  ;  Optimal print specification: Landscape, 9 points or smaller, monospace, 8Â1⁄2x11 paper
+    33                                  ;
+    34                                  ;===== Begin code area ============================================================================================================
+    35                                  
+    36                                  %include "debug.inc" 					    ;This file contains the subprogram to be tested with this test program.
+    37                              <1> ;System Title:  Debugger for X86 assembly programs
+    38                              <1> ;Author: Floyd Holliday
+    39                              <1> ;Email: activeprofessor@yahoo.com
+    40                              <1> ;Status: Released for general use; bugs will be fixed when reported
+    41                              <1> ;This module file name: debug.inc
+    42                              <1> ;This module purpose: This file is an "include" file.  It allows data to pass directly from the calling statement to the subprogram.
+    43                              <1> ;Language: X86
+    44                              <1> ;Syntax: Intel
+    45                              <1> ;Date of last update: 2013-Dec-13
+    46                              <1> ;Source file structure: width is 140 characters; detailed comments begin in column 61.
+    47                              <1> ;Printing: best results are obtained using landscape orientation with 9 point (or less) monospaced font.
+    48                              <1> ;
+    49                              <1> ;Targeted user group: Assembly programmers enrolled in programming courses like CPSC240.
+    50                              <1> ;
+    51                              <1> ;Requirements: debug.asm must be assembled into debug.o  This file is not to be assembled; it is used as is.  Place this file in the 
+    52                              <1> ;directory along with debug.o and with other assembled object files.
+    53                              <1> ;
+    54                              <1> 
+    55                              <1> ;===== showregisters ======================================================================================================================
+    56                              <1> 
+    57                              <1> extern showregisterssubprogram
+    58                              <1> 
+    59                              <1> %macro showregisters 1
+    60                              <1>     push qword %1
+    61                              <1>     call showregisterssubprogram
+    62                              <1>     ;Question: Where is the pop corresponding to the push above?  Answer: In the ret statement.
+    63                              <1> %endmacro
+    64                              <1> 
+    65                              <1> ;===== showstack ==========================================================================================================================
+    66                              <1> 
+    67                              <1> extern showstacksubprogram
+    68                              <1> 
+    69                              <1> %macro dumpstack 3
+    70                              <1>     push rsp                                      ;Save the current value of rsp since rsp is very volatile
+    71                              <1>     push rbp                                      ;Save the current value of rbp for insurance
+    72                              <1>     push qword %3                                 ;number of qwords inside the stack
+    73                              <1>     push qword %2                                 ;number of qwords outside the stack
+    74                              <1>     push qword %1                                 ;an arbitrary integer created by the caller
+    75                              <1>     call showstacksubprogram
+    76                              <1>     ;Question: Where are the pops corresponding to three pushes above?  Answer: In the ret statement.
+    77                              <1> %endmacro
+    78                              <1> 
+    79                              <1> ;===== showfpu ============================================================================================================================
+    80                              <1> 
+    81                              <1> extern showfpusubprogram
+    82                              <1> 
+    83                              <1> %macro showfpuregisters 1
+    84                              <1>     push qword %1                                 ;Integer identifying this showing of the fpu registers.
+    85                              <1>     call showfpusubprogram
+    86                              <1>     ;Where are the pops corresponding to those pushes?
+    87                              <1> %endmacro
+    88                              <1> 
+    89                              <1> ;===== showxmm ============================================================================================================================
+    90                              <1> 
+    91                              <1> extern showxmmsubprogram
+    92                              <1> 
+    93                              <1> %macro showxmmregisters 1
+    94                              <1>      push qword %1
+    95                              <1>      call showxmmsubprogram
+    96                              <1> %endmacro
+    97                              <1> 
+    98                              <1> ;===== showymm ============================================================================================================================
+    99                              <1> 
+   100                              <1> extern showymmsubprogram
+   101                              <1> 
+   102                              <1> %macro showymmregisters 1
+   103                              <1>     push qword %1
+   104                              <1>     call showymmsubprogram
+   105                              <1> %endmacro
+   106                              <1> 
+   107                              <1> ;==========================================================================================================================================
+   108                              <1> 
+   109                              <1> ;How to use the debugger.
+   110                              <1> 
+   111                              <1> ;1.  Assemble the file debug.asm and thereby create an object file known as debug.o
+   112                              <1> 
+   113                              <1> ;2.  Place into one single directory this file, debug.inc, and debug.o, and as many addition source file as desired.
+   114                              <1> 
+   115                              <1> ;3.  Insert the statement < %include "debug.inc" > without angle brackets into an asm source file to be debugged.  Place the statement 
+   116                              <1> ;    before segment .data .
+   117                              <1> 
+   118                              <1> ;4.  In segment .text place debugging statements at places where you want to examen the contents of registers.  There are four kinds 
+   119                              <1> ;    of debug statements, namely: show the integer registers, show the system stack, show the fpu registers, and show the SSE2 
+   120                              <1> ;    registers.  Examples of each of the four kinds of debug statements are found below.
+   121                              <1> 
+   122                              <1> ;Example of debug statememts.
+   123                              <1> 
+   124                              <1> ;==============================================
+   125                              <1> ;  showregisters 33
+   126                              <1> ;==============================================
+   127                              <1> ;The statement above will show the contents of all 16 integer registers and the contents of the flags register.  The trailing number 33 
+   128                              <1> ;is arbitrary.  The number 33 in the example can be replaced with any integer, but it cannot be omitted.
+   129                              <1> 
+   130                              <1> ;==============================================
+   131                              <1> ;  dumpstack 88, 2, 5
+   132                              <1> ;==============================================
+   133                              <1> ;The statement above will show the contents the system stack beginning with 2 quadwords outside of the top of the stack and ending with
+   134                              <1> ;quadword #5 inside the stack for a total of 8 quadwords.  The first parameter 88 is an arbitrary integer selected by the programmer.
+   135                              <1> ;The second parameter 2 indicates the number of quadwords beyond the top to be displayed.  To display nothing outside of the stack set
+   136                              <1> ;the middle parameter to 0.  The last parameter 5 is the number of qwords after the top to be display.  The count is from 0 to 5, and
+   137                              <1> ;therefore, a 5 parameter will cause 6 qwords inside the stack to be outputted.
+   138                              <1> 
+   139                              <1> ;==============================================
+   140                              <1> ;  showfpuregisters 133
+   141                              <1> ;==============================================
+   142                              <1> ;The statement above will show the contents of all 8 fpu registers.  The parameter 133 is arbitrary and may be replaced by any integer,
+   143                              <1> ;but it cannot be omitted.
+   144                              <1> 
+   145                              <1> ;==============================================
+   146                              <1> ;  showxmmregisters 888
+   147                              <1> ;==============================================
+   148                              <1> ;The statement above will show the contents of all 16 SSE2 registers.  The parameter 888 is arbitrary and may be replaced by any integer,
+   149                              <1> ;but it cannot be omitted.
+   150                              <1> 
+   151                              <1> ;==============================================
+   152                              <1> ;  showymmregisters 225
+   153                              <1> ;==============================================
+   154                              <1> ;The statement above will show the contents of all 16 AVE registers.  The parameter 225 is arbitrary and may be replaced by any integer,
+   155                              <1> ;but it cannot be omitted.
+   156                              <1> 
+   157                              <1> 
+   158                              <1> 
+   159                              <1> 
+   160                              <1> ;To the 240 class:
+   161                              <1> ;This debug set of subprograms was derived from the original work of Dr Paul Carter.  He made a similar set of subprograms that could 
+   162                              <1> ;be easily included in any assembly program.  All of his work was written in X86-32m and unfortunately, he seems to have lost interest 
+   163                              <1> ;in updating his work.  You can and probably should visit his website: http://www.drpaulcarter.com/pcasm/.  There you may download the
+   164                              <1> ;original include files which he called "asm_io.inc" and "asm_io.asm".  They are inside a zip file.  He also has a free ebook there on 
+   165                              <1> ;X86-32 programming.  Yes, all the examples are 32-bit one, but the text description of instructions is still very helpful.  For 
+   166                              <1> ;instance, in his ebook you can read a concise description of many of the FPU87 instructions, that is, those instructions that act on
+   167                              <1> ;the st registers.  Yes, I am aware that others have tried to update his work to become relevant to 64-bit programming, but I still like
+   168                              <1> ;the original ebook.
+   169                              <1> 
+   170                              <1> ;Thus, Dr Carter's work was the foundation for the debug.inc and debug.asm files you are now reading.  For the curious, you may wonder 
+   171                              <1> ;what happens when an assembly program has to call a C++ function that requires more that 6 incoming parameters.  There is an example of
+   172                              <1> ;passing 9 parameters to printf in the "showregisterssubprogram", which is inside the file debug.asm.  Notice the registerformat1 requires 8 numeric
+   173                              <1> ;values be passed to printf in addition to passing the string registerformat1 in rdi.  
+   174                              <1> 
+   175                              <1> 
+   176                              <1> 
+   177                                  
+   178                                  extern printf						    ;External C++ function for writing to standard output device
+   179                                  
+   180                                  extern scanf						    ;External C++ function for obtaining user input
+   181                                  
+   182                                  global ThePowersOfe	 				    ;This makes ThePowersOfe callable by functions outside of this file.
+   183                                  
+   184                                  segment .data						    ;Place initialized data here
+   185                                  
+   186                                  ;===== Message Declarations =======================================================================================================
+   187                                  
+   188 00000000 0A57656C636F6D6520-     welcome db 10, "Welcome to e^x programmed by Art Grichine!", 10,
+   189 00000009 746F20655E78207072-
+   190 00000012 6F6772616D6D656420-
+   191 0000001B 627920417274204772-
+   192 00000024 696368696E65210A   
+   193 0000002C 546869732070726F67-             db     "This program was tested on a MacBook Pro (late 2013) running Haswell i7 at 2.6GHz.", 10,
+   194 00000035 72616D207761732074-
+   195 0000003E 6573746564206F6E20-
+   196 00000047 61204D6163426F6F6B-
+   197 00000050 2050726F20286C6174-
+   198 00000059 652032303133292072-
+   199 00000062 756E6E696E67204861-
+   200 0000006B 7377656C6C20693720-
+   201 00000074 617420322E3647487A-
+   202 0000007D 2E0A               
+   203 0000007F 5468652070726F6772-             db     "The program will compute e raised to any value x with a high level of accuracy.", 10, 0
+   204 00000088 616D2077696C6C2063-
+   205 00000091 6F6D70757465206520-
+   206 0000009A 72616973656420746F-
+   207 000000A3 20616E792076616C75-
+   208 000000AC 652078207769746820-
+   209 000000B5 612068696768206C65-
+   210 000000BE 76656C206F66206163-
+   211 000000C7 6375726163792E0A00 
+   212                                  
+   213 000000D0 0A456E746572203420-     enter_number_x db  10, "Enter 4 floating point numbers for x separated by white space and press enter: ", 0 
+   214 000000D9 666C6F6174696E6720-
+   215 000000E2 706F696E74206E756D-
+   216 000000EB 6265727320666F7220-
+   217 000000F4 782073657061726174-
+   218 000000FD 656420627920776869-
+   219 00000106 746520737061636520-
+   220 0000010F 616E64207072657373-
+   221 00000118 20656E7465723A2000 
+   222                                  
+   223 00000121 456E74657220746865-     enter_number_taylor_series db "Enter the number of terms in the Taylor series: ", 0 
+   224 0000012A 206E756D626572206F-
+   225 00000133 66207465726D732069-
+   226 0000013C 6E2074686520546179-
+   227 00000145 6C6F72207365726965-
+   228 0000014E 733A2000           
+   229                                  
+   230 00000152 5468616E6B20796F75-     thank_you db "Thank you.", 10, 0
+   231 0000015B 2E0A00             
+   232                                  
+   233 0000015E 0A54686520636F6D70-     results db 10, "The computed results are as follows:", 10
+   234 00000167 757465642072657375-
+   235 00000170 6C7473206172652061-
+   236 00000179 7320666F6C6C6F7773-
+   237 00000182 3A0A               
+   238 00000184 202020202020202020-     	db     "           e^%3.5lf = %5.20lf", 10
+   239 0000018D 2020655E25332E356C-
+   240 00000196 66203D2025352E3230-
+   241 0000019F 6C660A             
+   242 000001A2 09202020655E25332E-     	db     "	   e^%3.5lf = %5.20lf", 10
+   243 000001AB 356C66203D2025352E-
+   244 000001B4 32306C660A         
+   245 000001B9 09202020655E25332E-     	db     "	   e^%3.5lf = %5.20lf", 10
+   246 000001C2 356C66203D2025352E-
+   247 000001CB 32306C660A         
+   248 000001D0 09202020655E25332E-     	db     "	   e^%3.5lf = %5.20lf", 10
+   249 000001D9 356C66203D2025352E-
+   250 000001E2 32306C660A         
+   251 000001E7 456E6A6F7920796F75-     	db     "Enjoy your exponents. The last of your values will be returned to the driver.", 10, 0
+   252 000001F0 72206578706F6E656E-
+   253 000001F9 74732E20546865206C-
+   254 00000202 617374206F6620796F-
+   255 0000020B 75722076616C756573-
+   256 00000214 2077696C6C20626520-
+   257 0000021D 72657475726E656420-
+   258 00000226 746F20746865206472-
+   259 0000022F 697665722E0A00     
+   260                                  
+   261 00000236 0A5468652073797374-     system_clock_pre db 10, "The system clock is %10ld, and parallel computations have begun.", 10, 0
+   262 0000023F 656D20636C6F636B20-
+   263 00000248 6973202531306C642C-
+   264 00000251 20616E642070617261-
+   265 0000025A 6C6C656C20636F6D70-
+   266 00000263 75746174696F6E7320-
+   267 0000026C 686176652062656775-
+   268 00000275 6E2E0A00           
+   269                                  
+   270 00000279 0A54686520636F6D70-     system_clock_post db 10, "The computations have completed and the system clock was %10ld at completion.", 10, 0
+   271 00000282 75746174696F6E7320-
+   272 0000028B 6861766520636F6D70-
+   273 00000294 6C6574656420616E64-
+   274 0000029D 207468652073797374-
+   275 000002A6 656D20636C6F636B20-
+   276 000002AF 776173202531306C64-
+   277 000002B8 20617420636F6D706C-
+   278 000002C1 6574696F6E2E0A00   
+   279                                  
+   280 000002C9 0A54686520656C6170-     elapsed_time db 10, "The elapsed time was %7ld tics = %7.1lf ns ≈ %1.8lf seconds.", 10, 0
+   281 000002D2 7365642074696D6520-
+   282 000002DB 7761732025376C6420-
+   283 000002E4 74696373203D202537-
+   284 000002ED 2E316C66206E7320E2-
+   285 000002F6 89882025312E386C66-
+   286 000002FF 207365636F6E64732E-
+   287 00000308 0A00               
+   288                                  
+   289 0000030A 257300                  stringformat db "%s", 0						;general string format
+   290                                  
+   291 0000030D 256C6620256C662025-     formatFourFloats db "%lf %lf %lf %lf", 0			;this format will absorb four 'x' user inputs of float type 64-bit
+   292 00000316 6C6620256C6600     
+   293                                  
+   294 0000031D 256C6600                formatOneFloat   db "%lf", 0					;this format will absorb Taylor Series input of float type 64-bit
+   295                                  
+   296                                  segment .bss							;Place un-initialized data here.
+   297                                  
+   298                                          ;This segment is empty
+   299                                  
+   300                                  segment .text							;Place executable instructions in this segment.
+   301                                  
+   302                                  ThePowersOfe:							;Entry point.  Execution begins here.
+   303                                  
+   304                                  ;=========== Back up all the integer registers used in this program ===============================================================
+   305                                  
+   306 00000000 55                      push rbp 							;Backup the stack base pointer
+   307 00000001 57                      push rdi 							;Backup the destination index
+   308 00000002 56                      push rsi 							;Backup the source index
+   309                                  
+   310                                  ;============  Preliminary ========================================================================================================
+   311                                  
+   312 00000003 C5FC77                  vzeroall							;zeros out all SSE registers
+   313                                  
+   314                                  ;=========== Initialize divider register ==========================================================================================
+   315                                  								;for our calculations we must set 4 SSE registry's to 1.0 to 
+   316                                  								;accomidate for our algorithm: count, nth term, accum
+   317 00000006 48B8000000000000F0-     mov  rax, 0x3ff0000000000000 					;copy HEX 1.0 value onto rax
+   318 0000000F 3F                 
+   319 00000010 50                      push rax							;push rax value onto the stack for broadcast operation
+   320 00000011 C4627D191424            vbroadcastsd ymm10, [rsp]					;makes ymm10 all 1.0, this will be our count
+   321 00000017 C4627D190C24            vbroadcastsd ymm9,  [rsp]					;makes ymm9 all 1.0, this will hold our nth term
+   322 0000001D C4627D190424            vbroadcastsd ymm8,  [rsp]					;makes ymm8 all 1.0, this will be our accumulator
+   323 00000023 C4627D193424            vbroadcastsd ymm14, [rsp]					;ymm14 we will use ymm14 to incriment count by 1.0 each iteration
+   324 00000029 58                      pop  rax							;push operand must be followed by a pop operation when complete
+   325                                  
+   326                                  ;=========== Show the initial message =============================================================================================
+   327                                  
+   328 0000002A 4831C0                  xor  rax, rax
+   329 0000002D 48BF-                   mov  rdi, stringformat 						;simple format indicating string ' "%s",0 '
+   330 0000002F [0A03000000000000] 
+   331 00000037 48BE-                   mov  rsi, welcome 						;display: Welcome Message, Name, Machine, Purpose of Assignment 
+   332 00000039 [0000000000000000] 
+   333 00000041 E8(00000000)            call printf							;call printf from the driver program (.cpp)
+   334                                  
+   335                                  ;============ Input for X values ==================================================================================================
+   336                                  
+   337                                  ;==== Display message for x ====
+   338 00000046 4831C0                  xor  rax, rax							;satisfies printf function, expects no float in upcoming printf
+   339 00000049 48BF-                   mov  rdi, stringformat						;"%s"
+   340 0000004B [0A03000000000000] 
+   341 00000053 48BE-                   mov  rsi, enter_number_x 					;asks user to enter two numbers seperated by a space
+   342 00000055 [D000000000000000] 
+   343 0000005D E8(00000000)            call printf							;call printf from the driver program (.cpp)
+   344                                  
+   345 00000062 6A00                    push qword 0							;allocate storage for an input number on int stack
+   346 00000064 6A00                    push qword 0							;allocate storage for an input number on int stack
+   347 00000066 6A00                    push qword 0							;allocate storage for an input number on int stack
+   348 00000068 6A00                    push qword 0							;allocate storage for an input number on int stack
+   349                                  
+   350                                  ;==== Grab data for x ====
+   351 0000006A 4831C0                  xor  rax, rax							;clear rax registry
+   352 0000006D 48BF-                   mov  rdi, formatFourFloats 					;formats input of scanf to recieve four numbers "%lf %lf %lf %lf"
+   353 0000006F [0D03000000000000] 
+   354 00000077 4889E6                  mov  rsi, rsp							;assign register to copy stack pointer location to absorb x1
+   355 0000007A 4889E2                  mov  rdx, rsp							;assign rdx to stack pointer in preperation for x2
+   356 0000007D 4883C208                add  rdx, 8							;assign register to copy stack pointer location to absorb x2
+   357 00000081 4889E1                  mov  rcx, rsp							;assign rcx to stack pointer in preperation for x3
+   358 00000084 4883C110                add  rcx, 16							;assign register to copy stack pointer location to absorb x3
+   359 00000088 4989E0                  mov  r8, rsp							;assign r8 to stack pointer in preperation for x4
+   360 0000008B 4983C018                add  r8, 24							;assign register to copy stack pointer location to absorb x4
+   361 0000008F E8(00000000)            call scanf							;call scanf from the driver program (.cpp)
+   362                                  
+   363                                  ;============ Move int stack into ymm registers ===================================================================================
+   364                                  
+   365 00000094 C57D101C24              vmovupd ymm11, [rsp] 						;place user x values onto ymm11 for upcoming manipulation
+   366 00000099 58                      pop rax								;deallocate memory allocation for input
+   367 0000009A 58                      pop rax								;deallocate memory allocation for input
+   368 0000009B 58                      pop rax								;deallocate memory allocation for input
+   369 0000009C 58                      pop rax								;deallocate memory allocation for input
+   370                                  
+   371                                  ;============ Input Taylor Series value ===========================================================================================
+   372                                  
+   373                                  ;==== Display message for Taylor Series ====			
+   374 0000009D 4831C0                  xor  rax, rax							;clear rax register, required for printf
+   375 000000A0 48BF-                   mov  rdi, stringformat						;"%s"
+   376 000000A2 [0A03000000000000] 
+   377 000000AA 48BE-                   mov  rsi, enter_number_taylor_series 				;Format: "Enter the number of terms in the Taylor series: "
+   378 000000AC [2101000000000000] 
+   379 000000B4 E8(00000000)            call printf							;call printf from the driver program (.cpp)
+   380                                  
+   381 000000B9 6A00                    push qword 0							;allocate storage for a user input number on stack
+   382                                  
+   383                                  ;==== Grab data for Taylor Series ====
+   384 000000BB 4831C0                  xor  rax, rax							;clear rax register, required for scanf
+   385 000000BE 48BF-                   mov  rdi, formatOneFloat 					;format to absorb one number: "%lf"
+   386 000000C0 [1D03000000000000] 
+   387 000000C8 4889E6                  mov  rsi, rsp							;set location of Taylor Series
+   388 000000CB E8(00000000)            call scanf							;call scanf from the driver program (.cpp)
+   389                                  
+   390                                  ;==== Place Taylor Series number on AVX ====
+   391                                  
+   392 000000D0 C57D103C24              vmovupd ymm15, [rsp]						;place Taylor Series number on xmm15 to compare for iteration
+   393 000000D5 58                      pop rax								;deallocate memory allocation for input
+   394                                  
+   395                                  ;==== Say "Thank You" ====
+   396 000000D6 4831C0                  xor  rax, rax							;tell printf not to look for any ints in SSE
+   397 000000D9 48BF-                   mov  rdi, stringformat						;"%s"
+   398 000000DB [0A03000000000000] 
+   399 000000E3 48BE-                   mov  rsi, thank_you						;print 'Thank you.'
+   400 000000E5 [5201000000000000] 
+   401 000000ED E8(00000000)            call printf							;call printf from the driver program (.cpp)
+   402                                  
+   403                                  ;============ Read system clock pre-calculations===================================================================================
+   404                                  
+   405                                  ;==== get system clock ====
+   406 000000F2 0FA2                    cpuid								;stop 'look ahead' for cpu
+   407 000000F4 0F31                    rdtsc								;read cpu clock, values stored in rdx:rax
+   408 000000F6 41BD00000000            mov qword r13, 0						;zero out r13 register for upcoming calculations
+   409 000000FC 41BC00000000            mov qword r12, 0						;zero out r12 register for upcoming calculations
+   410 00000102 4989C5                  mov 	  r13, rax						;place rdx value onto r13 in preparation to combine rax/rdx
+   411 00000105 4989D4                  mov 	  r12, rdx						;place rdx value onto r12 in preparation to combine rax/rdx
+   412 00000108 49C1E420                shl	  r12, 32						;shift r12 32 bits
+   413 0000010C 4D09EC                  or	  r12, r13						;combine r12 and r13, r12 has entire system clock count now 											
+   414                                  ;==== output system clock ====
+   415 0000010F 4C89E6                  mov rsi, r12							;place timer value from rax into rsi in preperation for output
+   416 00000112 4831C0                  xor rax, rax							;zero-out rax register
+   417 00000115 48BF-                   mov rdi, system_clock_pre					;assign output format to rdi for printf output
+   418 00000117 [3602000000000000] 
+   419 0000011F E8(00000000)            call printf							;print system clock tics pre-calculation
+   420                                  
+   421                                  ;============ Calculate Area ======================================================================================================
+   422                                  
+   423                                  iterate_again:							;iterate through until value is =to xmm15 (our taylor series input)
+   424                                  
+   425 00000124 C4413559CB              vmulpd ymm9, ymm11						;x^n
+   426 00000129 C441355ECA              vdivpd ymm9, ymm10						;(x^n)/n!
+   427 0000012E C4413D58C1              vaddpd ymm8, ymm9						;1 + (x^n)/n! + (x^n+1)/(n+1)! + etc...
+   428                                  
+   429 00000133 66450F2ED7              ucomisd xmm10, xmm15						;compare count (xmm7) with our users Taylor Series number (xmm15)
+   430 00000138 C4412D58D6              vaddpd  ymm10, ymm14						;increment count by 1
+   431 0000013D 72E5                    jb iterate_again						;if xmm7 < xmm15 jump to 'iterate_again:'
+   432                                  
+   433                                  ;============ Read system clock post-calculations==================================================================================
+   434                                  
+   435                                  ;==== get system clock ====
+   436 0000013F 0FA2                    cpuid								;stop 'look ahead' for cpu
+   437 00000141 0F31                    rdtsc								;read cpu clock, values stored in rdx:rax
+   438 00000143 41BF00000000            mov qword r15, 0						;zero out r15 register for upcoming calculations
+   439 00000149 41BE00000000            mov qword r14, 0						;zero out r14 register for upcoming calculations
+   440 0000014F 4989C7                  mov 	  r15, rax						;place rax value onto r15 in preparation to combine rax/rdx
+   441 00000152 4989D6                  mov 	  r14, rdx						;place rdx value onto r14 in preparation to combine rax/rdx
+   442 00000155 49C1E620                shl	  r14, 32						;shift r14 32 bits
+   443 00000159 4D09FE                  or	  r14, r15						;combine r14 and r15, r14 has entire system clock count now
+   444                                  											
+   445                                  ;==== output system clock ====
+   446 0000015C 4C89F6                  mov rsi, r14							;place timer value from rax into rsi in preperation for output
+   447 0000015F 4831C0                  xor rax, rax							;zero-out rax register
+   448 00000162 48BF-                   mov rdi, system_clock_post					;assign output format to rdi for printf output
+   449 00000164 [7902000000000000] 
+   450 0000016C E8(00000000)            call printf							;print system clock tics post-calculation
+   451                                  
+   452                                  ;========== Elapsed time ==========================================================================================================
+   453                                  								;our values of clockspeed pre-calculations is in r12, clockspeed 
+   454                                  								;post-calculations is in r14
+   455                                  ;==== calculate elapsed time (tics) ====
+   456 00000171 4D29E6                  sub r14, r12							;subtract the clockspeed pre-calculation from post-calc clockspeed
+   457                                  								;this gives us our elapsed time
+   458                                  								
+   459                                  								;bc we are doing floating point calculations it is easier to place
+   460                                  								;values onto the SSE registry and do the calculations there.
+   461                                  
+   462                                  ;==== calculate elapsed time (ns) ====				;our ns conversion formula is (clockspeed (in tics) * 10) / 26 = ns
+   463 00000174 41BB0A000000            mov       r11, 10						;need to increase numerator by factor of 10, set up upcoming calc
+   464 0000017A F2490F2AE3              cvtsi2sd xmm4, r11						;convert 10 into floating point and place onto xmm4
+   465 0000017F F2490F2AEE              cvtsi2sd xmm5, r14						;convert our clockspeed (in tics) and place onto xmm5
+   466 00000184 C5DD59E5                vmulpd   ymm4, ymm5						;multiply clockspeed (in tics) by factor of 10
+   467 00000188 41BB1A000000            mov       r11, 26						;int 26 onto r11 so that we may divide our value by(machine spd*10)
+   468 0000018E F2490F2AEB              cvtsi2sd xmm5, r11						;convert 26 into floating point and place onto xmm5
+   469 00000193 C5DD5EE5                vdivpd   ymm4, ymm5						;divide (tics * 10) by known cpu speed (2.6Ghz * 10) to get real ns	
+   470 00000197 C5FD10C4                vmovupd  ymm0, ymm4						;output for nanoseconds ready on ymm0
+   471                                  
+   472                                  ;==== calculate elapsed time (sec) ====				;ns --> sec = ns/1billion
+   473 0000019B 41BB00CA9A3B            mov r11, 1000000000						;place 1billion onto r11 to prepare for floatpnt conversion on SSE
+   474 000001A1 F2490F2AEB              cvtsi2sd xmm5, r11						;converst 1billion into float number and place on xmm5
+   475 000001A6 C5DD5EE5                vdivpd ymm4, ymm5						;divide ns/1billion = elapsed time in seconds
+   476 000001AA C5FD10CC                vmovupd ymm1, ymm4						;place elapsed time in seconds onto ymm1 for output
+   477                                  
+   478                                  ;==== output elapsed time ====					;elapsed time in tics sits on r14, ns on ymm0, sec on ymm1
+   479 000001AE 4C89F6                  mov rsi, r14							;place elapsed time in tics on to rsi for output
+   480 000001B1 B802000000              mov rax, 2							;tell printf to find the first two numbers(ns/sec)on SSE(xmm0,xmm1)
+   481 000001B6 48BF-                   mov rdi, elapsed_time						;format output for elapsed time in tics, ns, and seconds
+   482 000001B8 [C902000000000000] 
+   483 000001C0 E8(00000000)            call printf							;output elapsed time in tics, ns, and seconds
+   484                                  
+   485                                  
+   486                                  ;========== Output e^x ============================================================================================================
+   487                                  
+   488                                  ;==== prepare x output ====					;output data sitting in ymm11
+   489 000001C5 C4C17D10C3              vmovupd   ymm0, ymm11						;move into ymm0 for x1
+   490 000001CA C4C37D05D31B            vpermilpd ymm2, ymm11, 0x1B 					;swap, places x2 value in ymm2 for output
+   491 000001D0 C4637D19DC01            vextractf128 xmm4, ymm11, 1 					;shift of ymm into xmm, ABCC --> CCAB, places x3 in xmm4 for output
+   492 000001D6 C4E37D05F41B            vpermilpd ymm6, ymm4, 0x1B					;swap, places x4 value in ymm6 for output
+   493                                  
+   494                                  ;==== prepare e^x value output ====				;output data sitting in ymm8
+   495 000001DC C4C17D10C8              vmovupd   ymm1, ymm8						;move into ymm1 for e^x1
+   496 000001E1 C4C37D05D81B            vpermilpd ymm3, ymm8, 0x1B					;swap, places e^x2 value in ymm3 for output
+   497 000001E7 C4637D19C501            vextractf128 xmm5, ymm8, 1					;shift of ymm into xmm, ABCC --> CCAB, places e^x3 in xmm5 for out
+   498 000001ED C4E37D05FD1B            vpermilpd ymm7, ymm5, 0x1B					;swap, places e^x2 value in ymm3 for output
+   499                                  
+   500                                  ;==== print ====
+   501 000001F3 B808000000              mov  rax, 8							;tell printf to expect 8 values on the upcoming print
+   502 000001F8 48BF-                   mov  rdi, results	 					;prepare format for our 8 values on printf
+   503 000001FA [5E01000000000000] 
+   504 00000202 E8(00000000)            call printf							;print x and e^x values to the terminal
+   505                                  
+   506                                  ;=========== Now cleanup and return to the caller =================================================================================
+   507                                  
+   508 00000207 5E                      pop rsi 							;Restore original value
+   509 00000208 5F                      pop rdi 							;Restore original value
+   510 00000209 5D                      pop rbp								;Restore original value
+   511                                  
+   512 0000020A B801000000              mov qword rax, 1						;Return value of 1 to the driver
+   513                                  
+   514 0000020F C3                      ret								;Return to driver program (.cpp)
+   515                                                                                                 
+   516                                  ;========== End of program ThePowersOfe.asm========================================================================================
